@@ -9,25 +9,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import type { BusinessDetails } from "@/types";
-import { getAllBusinesses, createBusinessTableIfNotExists } from "@/lib/db"; // Import DB functions
+import { getAllBusinesses, createBusinessTableIfNotExists } from "@/lib/db";
 import { format } from 'date-fns';
 
 
 async function fetchData(): Promise<BusinessDetails[]> {
   try {
-    // Ensure the table exists before trying to fetch data
-    // This is useful for the first run or in development environments
-    // In production, migrations are typically handled separately.
     await createBusinessTableIfNotExists();
     const businesses = await getAllBusinesses();
     return businesses;
   } catch (error) {
     console.error("Failed to fetch businesses for dashboard:", error);
-    // Return an empty array or re-throw, depending on how you want to handle errors
-    // For the dashboard, showing an empty table with an error message might be best
-    throw error; // Re-throw to be caught by the page component
+    throw error;
   }
 }
 
@@ -68,6 +64,7 @@ export default async function DashboardPage() {
                   <TableHead className="font-semibold text-primary">GSTIN</TableHead>
                   <TableHead className="font-semibold text-primary">Email</TableHead>
                   <TableHead className="text-right font-semibold text-primary">Onboarded At</TableHead>
+                  <TableHead className="text-center font-semibold text-primary">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -81,6 +78,16 @@ export default async function DashboardPage() {
                     <TableCell className="text-muted-foreground">{business.email || "N/A"}</TableCell>
                     <TableCell className="text-right text-muted-foreground">
                       {business.createdAt ? format(new Date(business.createdAt), 'PPpp') : 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center space-x-2">
+                        <Button variant="outline" size="icon" aria-label="Edit business" disabled> {/* Functionality not yet implemented */}
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="destructive" size="icon" aria-label="Delete business" disabled> {/* Functionality not yet implemented */}
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
