@@ -1,3 +1,4 @@
+
 // src/lib/db.ts
 import { neon } from '@neondatabase/serverless';
 import type { BusinessDetails, BusinessDetailsBase } from '@/types';
@@ -36,6 +37,9 @@ export async function createBusinessTableIfNotExists(): Promise<void> {
 export async function insertBusinessDetails(details: BusinessDetailsBase): Promise<void> {
   const { businessName, businessType, contactPerson, phone, gstin, email } = details;
   try {
+    // Assuming column names in the DB are businessname, businesstype, contactperson (lowercase)
+    // due to unquoted identifiers in CREATE TABLE.
+    // The VALUES are from camelCase JS object properties.
     await sql`
       INSERT INTO businesses (businessName, businessType, contactPerson, phone, gstin, email)
       VALUES (${businessName}, ${businessType}, ${contactPerson}, ${phone}, ${gstin || null}, ${email || null});
@@ -48,10 +52,20 @@ export async function insertBusinessDetails(details: BusinessDetailsBase): Promi
 
 export async function getAllBusinesses(): Promise<BusinessDetails[]> {
   try {
+    // Explicitly alias lowercase DB column names to camelCase for JS object mapping.
+    // PostgreSQL stores unquoted identifiers as lowercase.
     const businesses = await sql<BusinessDetails[]>`
-      SELECT id, businessName, businessType, contactPerson, phone, gstin, email, createdAt
+      SELECT
+        id,
+        businessname AS "businessName",
+        businesstype AS "businessType",
+        contactperson AS "contactPerson",
+        phone,
+        gstin,
+        email,
+        createdat AS "createdAt"
       FROM businesses
-      ORDER BY createdAt DESC;
+      ORDER BY createdat DESC;
     `;
     return businesses;
   } catch (error) {
