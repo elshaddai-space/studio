@@ -4,9 +4,9 @@ import type { BusinessDetails, BusinessDetailsBase } from '@/types';
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
-    'DATABASE_URL environment variable is not set. ' +
-    'Please ensure it is defined in your .env.local file ' +
-    'and that you have restarted your Next.js development server.'
+    'DATABASE_URL environment variable is not loaded. ' +
+    'Please ensure your .env.local file is correctly placed in the project root, ' +
+    'contains the DATABASE_URL, and that you have fully restarted your Next.js development server.'
   );
 }
 
