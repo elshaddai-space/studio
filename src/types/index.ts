@@ -9,26 +9,33 @@ export interface Message {
   isLoading?: boolean; // Optional: for showing loading indicator for bot message
 }
 
-export type BusinessDetails = z.infer<typeof BusinessDetailsSchema>;
+// Base type for data collection
+export type BusinessDetailsBase = z.infer<typeof BusinessDetailsSchema>;
 
-export type BusinessFieldKey = keyof BusinessDetails;
+// Type for data stored in and retrieved from the database
+export interface BusinessDetails extends BusinessDetailsBase {
+  id?: number; // Optional because it's not present during collection, but is in DB
+  createdAt?: Date; // Optional for the same reason
+}
+
+export type BusinessFieldKey = keyof BusinessDetailsBase;
 
 export interface OnboardingQuestion {
   key: BusinessFieldKey;
   questionText: string;
   isRequired: boolean;
-  isSensitive?: boolean; // For masking input, e.g. passwords, not used here but good for future
-  validate?: (value: string) => string | null; // Specific validation if needed beyond Zod
-  enumOptions?: readonly string[]; // For businessType
+  isSensitive?: boolean;
+  validate?: (value: string) => string | null;
+  enumOptions?: readonly string[];
 }
 
 export interface OnboardingState {
-  collectedData: Partial<BusinessDetails>;
+  collectedData: Partial<BusinessDetailsBase>; // Use Base here as ID/createdAt not part of collection
   currentQuestionKey: BusinessFieldKey | null;
-  currentQuestionIndex: number; // To track progress through defined questions
+  currentQuestionIndex: number;
   isComplete: boolean;
-  fieldErrors: Partial<Record<BusinessFieldKey, string>>; // Store validation errors per field
-  history: Message[]; // To keep track of conversation for context if needed by AI later
+  fieldErrors: Partial<Record<BusinessFieldKey, string>>;
+  history: Message[];
 }
 
 export interface OnboardingRequestPayload {
@@ -39,5 +46,5 @@ export interface OnboardingRequestPayload {
 export interface OnboardingResponsePayload {
   botResponse: string;
   updatedState: OnboardingState;
-  shouldEndConversation?: boolean; // If all data collected or major error
+  shouldEndConversation?: boolean;
 }

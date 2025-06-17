@@ -1,9 +1,10 @@
 // src/app/onboarding/actions.ts
 "use server";
 
-import type { BusinessDetails, OnboardingRequestPayload, OnboardingResponsePayload, OnboardingState, BusinessFieldKey } from '@/types';
+import type { OnboardingRequestPayload, OnboardingResponsePayload, OnboardingState, BusinessFieldKey, BusinessDetailsBase } from '@/types';
 import { BusinessDetailsSchema, businessTypes } from '@/lib/schemas';
 import { onboardingQuestions } from '@/lib/onboardingQuestions';
+import { insertBusinessDetails } from '@/lib/db'; // Import DB function
 import { z } from 'zod';
 
 function validateField(fieldKey: BusinessFieldKey, value: string): { error: string | null; parsedValue: any } {
@@ -14,7 +15,6 @@ function validateField(fieldKey: BusinessFieldKey, value: string): { error: stri
     return { error: null, parsedValue: undefined };
   }
   
-  // Special handling for enum with user-friendly input
   if (fieldKey === 'businessType') {
     const foundType = businessTypes.find(bt => bt.toLowerCase() === value.toLowerCase().trim());
     if (foundType) {
@@ -28,11 +28,9 @@ function validateField(fieldKey: BusinessFieldKey, value: string): { error: stri
      return { error: null, parsedValue: safeParseResult.data };
   }
 
-
   const safeParseResult = fieldSchema.safeParse(value);
 
   if (!safeParseResult.success) {
-    // Flatten Zod errors into a single string.
     const formattedError = safeParseResult.error.errors.map(e => e.message).join(', ');
     return { error: formattedError, parsedValue: value };
   }
@@ -45,7 +43,7 @@ export async function processOnboardingStep(
   const { userInput, currentState } = payload;
   let { collectedData, currentQuestionIndex, fieldErrors, isComplete } = currentState;
   
-  fieldErrors = {}; // Clear previous errors for the current field attempt
+  fieldErrors = {};
 
   const currentQuestion = onboardingQuestions[currentQuestionIndex];
 
@@ -57,7 +55,6 @@ export async function processOnboardingStep(
     };
   }
 
-  // Validate user input for the current question
   const { error: validationError, parsedValue } = validateField(currentQuestion.key, userInput);
 
   if (validationError) {
@@ -69,10 +66,8 @@ export async function processOnboardingStep(
     };
   }
 
-  // Input is valid, store it
   collectedData = { ...collectedData, [currentQuestion.key]: parsedValue };
 
-  // Move to the next question
   const nextQuestionIndex = currentQuestionIndex + 1;
 
   if (nextQuestionIndex < onboardingQuestions.length) {
@@ -88,28 +83,44 @@ export async function processOnboardingStep(
       },
     };
   } else {
-    // All questions answered
     isComplete = true;
-    let summary = "Thank you for providing your business details!\nHere's a summary:\n";
-    for (const key in collectedData) {
-      const TypedKey = key as BusinessFieldKey;
-      if (collectedData[TypedKey] !== undefined) {
-         summary += `- ${onboardingQuestions.find(q=>q.key === TypedKey)?.key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) || key}: ${collectedData[TypedKey]}\n`;
+    const finalData = collectedData as BusinessDetailsBase;
+
+    try {
+      await insertBusinessDetails(finalData); // Save to database
+      let summary = "Thank you for providing your business details! Your information has been saved.\nHere's a summary:\n";
+      for (const key in finalData) {
+        const typedKey = key as BusinessFieldKey;
+        if (finalData[typedKey] !== undefined) {
+           summary += `- ${onboardingQuestions.find(q=>q.key === typedKey)?.key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) || key}: ${finalData[typedKey]}\n`;
+        }
       }
+      summary += "\nWe will get in touch with you shortly.";
+      
+      return {
+        botResponse: summary,
+        updatedState: {
+          ...currentState,
+          collectedData,
+          isComplete: true,
+          currentQuestionKey: null,
+          currentQuestionIndex: nextQuestionIndex,
+          fieldErrors: {},
+        },
+        shouldEndConversation: true,
+      };
+    } catch (dbError: any) {
+      console.error("Database submission error:", dbError);
+      return {
+        botResponse: "We encountered an issue saving your details. Please try completing the onboarding again later. Our team has been notified.",
+        updatedState: { 
+            ...currentState, 
+            collectedData, // Keep collected data in case user wants to retry later or for diagnostics
+            isComplete: false, // Mark as not complete so they could potentially retry
+            fieldErrors: { submit: "Failed to save to database." } 
+        },
+        shouldEndConversation: true, // End conversation due to error
+      };
     }
-    summary += "\nWe will get in touch with you shortly."
-    
-    return {
-      botResponse: summary,
-      updatedState: {
-        ...currentState,
-        collectedData,
-        isComplete: true,
-        currentQuestionKey: null,
-        currentQuestionIndex: nextQuestionIndex, //  Should be onboardingQuestions.length
-        fieldErrors: {},
-      },
-      shouldEndConversation: true,
-    };
   }
 }
