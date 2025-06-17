@@ -3,7 +3,11 @@ import { neon } from '@neondatabase/serverless';
 import type { BusinessDetails, BusinessDetailsBase } from '@/types';
 
 if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is not set');
+  throw new Error(
+    'DATABASE_URL environment variable is not set. ' +
+    'Please ensure it is defined in your .env.local file ' +
+    'and that you have restarted your Next.js development server.'
+  );
 }
 
 const sql = neon(process.env.DATABASE_URL);
