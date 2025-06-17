@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, BotIcon as BotAvatarIcon, Loader2 } from 'lucide-react'; // Renamed BotIcon to BotAvatarIcon
+import React, { useState, useEffect } from 'react';
 
 interface ChatMessageProps {
   message: Message;
@@ -13,6 +14,12 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.sender === 'user';
+  const [formattedTimestamp, setFormattedTimestamp] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Format timestamp only on the client-side after hydration
+    setFormattedTimestamp(format(message.timestamp, 'HH:mm'));
+  }, [message.timestamp]);
 
   return (
     <div
@@ -46,14 +53,14 @@ export function ChatMessage({ message }: ChatMessageProps) {
         ) : (
           <p className="text-sm whitespace-pre-wrap">{message.text}</p>
         )}
-        {!message.isLoading && (
+        {!message.isLoading && formattedTimestamp && (
            <p
             className={cn(
               'mt-1.5 text-xs', // Increased margin top
               isUser ? 'text-primary-foreground/80 text-right' : 'text-muted-foreground text-left'
             )}
           >
-            {format(message.timestamp, 'HH:mm')}
+            {formattedTimestamp}
           </p>
         )}
       </div>
