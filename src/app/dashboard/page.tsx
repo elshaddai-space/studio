@@ -9,11 +9,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { Users, AlertTriangle } from "lucide-react";
 import type { BusinessDetails } from "@/types";
 import { getAllBusinesses, createBusinessTableIfNotExists } from "@/lib/db";
 import { format } from 'date-fns';
+import BusinessActionButtons from "@/components/dashboard/BusinessActionButtons"; // New import
 
 
 async function fetchData(): Promise<BusinessDetails[]> {
@@ -80,14 +80,11 @@ export default async function DashboardPage() {
                       {business.createdAt ? format(new Date(business.createdAt), 'PPpp') : 'N/A'}
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="flex justify-center space-x-2">
-                        <Button variant="outline" size="icon" aria-label="Edit business" disabled> {/* Functionality not yet implemented */}
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" size="icon" aria-label="Delete business" disabled> {/* Functionality not yet implemented */}
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {business.id ? (
+                        <BusinessActionButtons businessId={business.id} businessName={business.businessName} />
+                      ) : (
+                        <div className="text-muted-foreground text-xs">ID missing</div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

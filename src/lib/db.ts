@@ -60,3 +60,19 @@ export async function getAllBusinesses(): Promise<BusinessDetails[]> {
     // return []; // Or return empty array on error, depending on desired behavior
   }
 }
+
+export async function deleteBusinessById(id: number): Promise<void> {
+  try {
+    const result = await sql`
+      DELETE FROM businesses WHERE id = ${id};
+    `;
+    if (result.rowCount === 0) {
+      console.warn(`No business found with id ${id} to delete.`);
+      // Optionally throw an error if no row was deleted, indicating the ID might be invalid
+      // throw new Error(`No business found with id ${id}.`);
+    }
+  } catch (error) {
+    console.error(`Error deleting business with id ${id}:`, error);
+    throw new Error(`Failed to delete business with id ${id}.`);
+  }
+}
