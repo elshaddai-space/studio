@@ -4,7 +4,7 @@
 import type { OnboardingRequestPayload, OnboardingResponsePayload, OnboardingState, BusinessFieldKey, BusinessDetailsBase } from '@/types';
 import { BusinessDetailsSchema, businessTypes } from '@/lib/schemas';
 import { onboardingQuestions } from '@/lib/onboardingQuestions';
-import { insertBusinessDetails } from '@/lib/db'; // Import DB function
+import { insertBusinessDetails, createBusinessTableIfNotExists } from '@/lib/db'; // Import DB functions
 import { z } from 'zod';
 
 function validateField(fieldKey: BusinessFieldKey, value: string): { error: string | null; parsedValue: any } {
@@ -87,6 +87,7 @@ export async function processOnboardingStep(
     const finalData = collectedData as BusinessDetailsBase;
 
     try {
+      await createBusinessTableIfNotExists(); // Ensure table exists before inserting
       await insertBusinessDetails(finalData); // Save to database
       let summary = "Thank you for providing your business details! Your information has been saved.\nHere's a summary:\n";
       for (const key in finalData) {
