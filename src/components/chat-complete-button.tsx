@@ -1,21 +1,6 @@
-"use client";
-
-import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
-
-interface ChatCompleteButtonProps {
-  onClick: () => void;
-}
-
-export function ChatCompleteButton({ onClick }: ChatCompleteButtonProps) {
-  return (
-    <Button
-      onClick={onClick}
-      className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/90"
-      aria-label="Submit Conversation"
-    >
-      <CheckCircle className="mr-2 h-5 w-5" />
-      Submit Conversation
-    </Button>
-  );
-}
+// This file is no longer needed for the new application structure.
+// The onboarding process will conclude with a final message from the bot.
+// If a specific submission action is required after data collection, 
+// it would be part of the onboarding flow logic.
+// For now, this component is removed to avoid confusion.
+// To delete this file, you can explicitly ask for its removal.
