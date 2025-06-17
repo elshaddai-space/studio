@@ -19,6 +19,7 @@ export async function createBusinessTableIfNotExists(): Promise<void> {
         id SERIAL PRIMARY KEY,
         businessName TEXT NOT NULL,
         businessType TEXT NOT NULL,
+        contactPerson TEXT NOT NULL,
         phone TEXT NOT NULL,
         gstin TEXT,
         email TEXT,
@@ -33,11 +34,11 @@ export async function createBusinessTableIfNotExists(): Promise<void> {
 }
 
 export async function insertBusinessDetails(details: BusinessDetailsBase): Promise<void> {
-  const { businessName, businessType, phone, gstin, email } = details;
+  const { businessName, businessType, contactPerson, phone, gstin, email } = details;
   try {
     await sql`
-      INSERT INTO businesses (businessName, businessType, phone, gstin, email)
-      VALUES (${businessName}, ${businessType}, ${phone}, ${gstin || null}, ${email || null});
+      INSERT INTO businesses (businessName, businessType, contactPerson, phone, gstin, email)
+      VALUES (${businessName}, ${businessType}, ${contactPerson}, ${phone}, ${gstin || null}, ${email || null});
     `;
   } catch (error) {
     console.error("Error inserting business details:", error);
@@ -48,7 +49,7 @@ export async function insertBusinessDetails(details: BusinessDetailsBase): Promi
 export async function getAllBusinesses(): Promise<BusinessDetails[]> {
   try {
     const businesses = await sql<BusinessDetails[]>`
-      SELECT id, businessName, businessType, phone, gstin, email, createdAt
+      SELECT id, businessName, businessType, contactPerson, phone, gstin, email, createdAt
       FROM businesses
       ORDER BY createdAt DESC;
     `;

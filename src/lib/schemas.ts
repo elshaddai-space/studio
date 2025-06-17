@@ -7,6 +7,7 @@ export const BusinessDetailsSchema = z.object({
   businessType: z.enum(businessTypes, {
     errorMap: () => ({ message: `Invalid business type. Please choose from: ${businessTypes.join(', ')}.` })
   }),
+  contactPerson: z.string().min(1, "Contact person name cannot be empty."),
   gstin: z.string()
     .regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format. It should be like 22AAAAA0000A1Z5.")
     .optional()

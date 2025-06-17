@@ -92,8 +92,9 @@ export async function processOnboardingStep(
       let summary = "Thank you for providing your business details! Your information has been saved.\nHere's a summary:\n";
       for (const key in finalData) {
         const typedKey = key as BusinessFieldKey;
+        const questionLabel = onboardingQuestions.find(q => q.key === typedKey)?.key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) || key;
         if (finalData[typedKey] !== undefined) {
-           summary += `- ${onboardingQuestions.find(q=>q.key === typedKey)?.key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) || key}: ${finalData[typedKey]}\n`;
+           summary += `- ${questionLabel}: ${finalData[typedKey]}\n`;
         }
       }
       summary += "\nWe will get in touch with you shortly.";

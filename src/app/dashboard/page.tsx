@@ -63,6 +63,7 @@ export default async function DashboardPage() {
                 <TableRow className="bg-muted hover:bg-muted/60">
                   <TableHead className="w-[200px] font-semibold text-primary">Business Name</TableHead>
                   <TableHead className="font-semibold text-primary">Type</TableHead>
+                  <TableHead className="font-semibold text-primary">Contact Person</TableHead>
                   <TableHead className="font-semibold text-primary">Phone</TableHead>
                   <TableHead className="font-semibold text-primary">GSTIN</TableHead>
                   <TableHead className="font-semibold text-primary">Email</TableHead>
@@ -74,6 +75,7 @@ export default async function DashboardPage() {
                   <TableRow key={business.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium text-foreground">{business.businessName}</TableCell>
                     <TableCell className="text-muted-foreground">{business.businessType}</TableCell>
+                    <TableCell className="text-muted-foreground">{business.contactPerson}</TableCell>
                     <TableCell className="text-muted-foreground">{business.phone}</TableCell>
                     <TableCell className="text-muted-foreground">{business.gstin || "N/A"}</TableCell>
                     <TableCell className="text-muted-foreground">{business.email || "N/A"}</TableCell>

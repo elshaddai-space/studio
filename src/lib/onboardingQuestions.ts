@@ -14,6 +14,11 @@ export const onboardingQuestions: ReadonlyArray<OnboardingQuestion> = [
     enumOptions: businessTypes,
   },
   {
+    key: 'contactPerson',
+    questionText: "What is the name of the primary contact person for this business?",
+    isRequired: true,
+  },
+  {
     key: 'phone',
     questionText: "Understood. What is your business phone number? Please use the format +91XXXXXXXXXX (e.g., +919876543210).",
     isRequired: true,
