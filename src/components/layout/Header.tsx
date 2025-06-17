@@ -11,6 +11,7 @@ export default function Header() {
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/onboarding', label: 'Onboarding' },
+    { href: '/dashboard', label: 'Dashboard' }, // Added Dashboard link
   ];
 
   return (
