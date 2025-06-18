@@ -1,14 +1,17 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { BotIcon as PageBotIcon, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChatMessage } from '@/components/chat-message'; // Reusing ChatMessage
-import { ChatInput } from '@/components/chat-input'; // Reusing ChatInput
-import type { Message, OnboardingState, BusinessDetails } from '@/types';
+import { ChatMessage } from '@/components/chat-message'; 
+import { ChatInput } from '@/components/chat-input'; 
+import type { Message, OnboardingState } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { onboardingQuestions } from '@/lib/onboardingQuestions';
-import { processOnboardingStep } from './actions'; // Server action
+import { processOnboardingStep } from './actions'; 
+import { useAuth } from '@/context/AuthContext'; // Import useAuth
 
 const initialBotMessage: Message = {
   id: crypto.randomUUID(),
@@ -27,11 +30,20 @@ const initialOnboardingState: OnboardingState = {
 };
 
 export default function OnboardingPage() {
+  const { user, loading: authLoading } = useAuth(); // Get user and loading state
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([initialBotMessage]);
   const [onboardingState, setOnboardingState] = useState<OnboardingState>(initialOnboardingState);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login?message=Please log in to start onboarding.'); // Redirect if not logged in
+    }
+  }, [user, authLoading, router]);
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -49,11 +61,9 @@ export default function OnboardingPage() {
     };
     setMessages((prevMessages) => {
       if (isLoadingMsg && sender === 'bot') {
-        // Replace previous loading message if any
         const filteredMessages = prevMessages.filter(m => !(m.sender === 'bot' && m.isLoading));
         return [...filteredMessages, newMessage];
       }
-      // Remove any bot loading message when a new message (user or final bot) is added
       const filteredMessages = prevMessages.filter(m => !(m.sender === 'bot' && m.isLoading));
       return [...filteredMessages, newMessage];
     });
@@ -61,11 +71,11 @@ export default function OnboardingPage() {
   };
 
   const handleSendMessage = useCallback(async (text: string) => {
-    if (onboardingState.isComplete || isLoading) return;
+    if (onboardingState.isComplete || isLoading || !user) return; // Prevent action if not logged in
 
     addMessage(text, 'user');
     setIsLoading(true);
-    addMessage("Thinking...", 'bot', true); // Add a temporary loading message for the bot
+    addMessage("Thinking...", 'bot', true); 
 
     try {
       const response = await processOnboardingStep({
@@ -73,19 +83,16 @@ export default function OnboardingPage() {
         currentState: onboardingState,
       });
 
-      // Remove loading message and add actual bot response
       setMessages(prev => prev.filter(m => !(m.sender ==='bot' && m.isLoading)));
       addMessage(response.botResponse, 'bot');
       setOnboardingState(response.updatedState);
 
       if (response.updatedState.isComplete) {
-        // Optional: Display collected data or a success message
         toast({
           title: "Onboarding Complete!",
           description: "Your business details have been collected.",
           variant: "default",
         });
-        // console.log("Collected Data:", response.updatedState.collectedData);
       }
     } catch (error) {
       console.error("Error processing onboarding step:", error);
@@ -99,8 +106,15 @@ export default function OnboardingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [onboardingState, isLoading, toast]);
+  }, [onboardingState, isLoading, toast, user]);
 
+  if (authLoading || (!user && !authLoading)) { // Show loader while auth state is determined or if user is null (being redirected)
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-theme(spacing.36))]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-theme(spacing.16)-theme(spacing.20))] max-w-2xl mx-auto bg-background shadow-xl rounded-lg border my-4">
@@ -125,10 +139,11 @@ export default function OnboardingPage() {
       <footer className="p-4 border-t bg-card sticky bottom-0 z-10 rounded-b-lg">
         <ChatInput
           onSendMessage={handleSendMessage}
-          disabled={onboardingState.isComplete || isLoading}
+          disabled={onboardingState.isComplete || isLoading || !user}
           placeholder={
             isLoading ? "Processing..." : 
-            onboardingState.isComplete ? "Onboarding finished. Thank you!" : "Type your answer..."
+            onboardingState.isComplete ? "Onboarding finished. Thank you!" : 
+            !user ? "Please log in to start onboarding." : "Type your answer..."
           }
         />
          {isLoading && <Loader2 className="animate-spin h-4 w-4 text-muted-foreground absolute right-20 bottom-7" />}
