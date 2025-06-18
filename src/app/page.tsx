@@ -1,8 +1,10 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, BarChart2, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Briefcase, BarChart2, ShieldCheck, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import Image from 'next/image';
+import { SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs';
 
 export default function HomePage() {
   return (
@@ -16,12 +18,30 @@ export default function HomePage() {
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
             A revolutionary platform providing seamless financial tools, smart analytics, and effortless business onboarding.
           </p>
-          <Link href="/onboarding">
-            <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
-              Onboard Your Business
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+            <Link href="/onboarding">
+              <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 w-full sm:w-auto">
+                Onboard Your Business
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <SignedOut>
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <SignInButton mode="modal">
+                  <Button variant="outline" size="lg" className="text-lg px-8 py-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 border-accent-foreground/50 hover:bg-accent/10 hover:text-accent-foreground w-full sm:w-auto">
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Login
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <Button variant="outline" size="lg" className="text-lg px-8 py-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 border-accent-foreground/50 hover:bg-accent/10 hover:text-accent-foreground w-full sm:w-auto">
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Sign Up
+                  </Button>
+                </SignUpButton>
+              </div>
+            </SignedOut>
+          </div>
         </div>
       </section>
 

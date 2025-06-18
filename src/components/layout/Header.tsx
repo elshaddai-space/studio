@@ -1,6 +1,7 @@
 
 "use client";
 
+import React from 'react'; // Added React import
 import Link from 'next/link';
 import { BotIcon, LogIn as LogInIconLucide, UserPlus } from 'lucide-react';
 import { usePathname } from 'next/navigation';
