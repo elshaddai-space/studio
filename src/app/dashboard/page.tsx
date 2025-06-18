@@ -3,7 +3,6 @@
 "use client"; 
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -19,38 +18,27 @@ import type { BusinessDetails } from "@/types";
 import { getAllBusinesses, createBusinessTableIfNotExists } from "@/lib/db";
 import { format } from 'date-fns';
 import BusinessActionButtons from "@/components/dashboard/BusinessActionButtons";
-import { useAuth } from '@/context/AuthContext'; // Import useAuth
+import { useUser } from '@clerk/nextjs'; // Import useUser from Clerk
 
 async function fetchData(): Promise<BusinessDetails[]> {
   try {
-    // This function runs on the server, so it's okay here
-    // However, createBusinessTableIfNotExists might be better in a dedicated setup script or action
-    // For now, keeping it as is to ensure table exists for demo.
     await createBusinessTableIfNotExists(); 
     const businesses = await getAllBusinesses();
     return businesses;
   } catch (error) {
     console.error("Failed to fetch businesses for dashboard:", error);
-    // Re-throw to be caught by the page component
     throw error; 
   }
 }
 
 export default function DashboardPage() {
-  const { user, loading: authLoading } = useAuth(); // Get user and loading state
-  const router = useRouter();
+  const { isSignedIn, isLoaded } = useUser(); 
   const [businesses, setBusinesses] = useState<BusinessDetails[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login?message=Please log in to view the dashboard.'); // Redirect if not logged in
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user) { // Only fetch data if user is logged in
+    if (isLoaded && isSignedIn) { 
       setIsLoadingData(true);
       fetchData()
         .then(data => {
@@ -64,15 +52,16 @@ export default function DashboardPage() {
         .finally(() => {
           setIsLoadingData(false);
         });
-    } else if (!authLoading && !user) {
-      // If user is definitely not logged in and not loading, clear data and stop loading
+    } else if (isLoaded && !isSignedIn) {
+      // User is not signed in, data fetching is skipped by middleware typically,
+      // but good to clear state if component somehow renders.
       setBusinesses([]);
       setIsLoadingData(false);
     }
-  }, [user, authLoading]); // Re-fetch data if user changes
+  }, [isSignedIn, isLoaded]);
 
 
-  if (authLoading || (!user && !authLoading)) { // Show loader while auth state is determined or if user is null (being redirected)
+  if (!isLoaded) { 
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-theme(spacing.36))]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -80,6 +69,9 @@ export default function DashboardPage() {
     );
   }
 
+  // If middleware is set up correctly, this page shouldn't render if not signed in.
+  // However, as a fallback, you could show a message or redirect.
+  // For now, relying on middleware to handle unauthenticated access.
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">

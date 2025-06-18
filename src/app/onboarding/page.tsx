@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { BotIcon as PageBotIcon, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage } from '@/components/chat-message'; 
@@ -11,7 +10,7 @@ import type { Message, OnboardingState } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { onboardingQuestions } from '@/lib/onboardingQuestions';
 import { processOnboardingStep } from './actions'; 
-import { useAuth } from '@/context/AuthContext'; // Import useAuth
+import { useUser } from '@clerk/nextjs'; // Import useUser from Clerk
 
 const initialBotMessage: Message = {
   id: crypto.randomUUID(),
@@ -30,20 +29,12 @@ const initialOnboardingState: OnboardingState = {
 };
 
 export default function OnboardingPage() {
-  const { user, loading: authLoading } = useAuth(); // Get user and loading state
-  const router = useRouter();
+  const { isSignedIn, isLoaded } = useUser(); // Get user and loading state from Clerk
   const [messages, setMessages] = useState<Message[]>([initialBotMessage]);
   const [onboardingState, setOnboardingState] = useState<OnboardingState>(initialOnboardingState);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login?message=Please log in to start onboarding.'); // Redirect if not logged in
-    }
-  }, [user, authLoading, router]);
-
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -71,7 +62,7 @@ export default function OnboardingPage() {
   };
 
   const handleSendMessage = useCallback(async (text: string) => {
-    if (onboardingState.isComplete || isLoading || !user) return; // Prevent action if not logged in
+    if (onboardingState.isComplete || isLoading || !isSignedIn) return; // Prevent action if not signed in
 
     addMessage(text, 'user');
     setIsLoading(true);
@@ -106,15 +97,17 @@ export default function OnboardingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [onboardingState, isLoading, toast, user]);
+  }, [onboardingState, isLoading, toast, isSignedIn]);
 
-  if (authLoading || (!user && !authLoading)) { // Show loader while auth state is determined or if user is null (being redirected)
+  if (!isLoaded) { 
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-theme(spacing.36))]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+  
+  // If middleware is set up correctly, this page shouldn't render if not signed in.
 
   return (
     <div className="flex flex-col h-[calc(100vh-theme(spacing.16)-theme(spacing.20))] max-w-2xl mx-auto bg-background shadow-xl rounded-lg border my-4">
@@ -139,11 +132,11 @@ export default function OnboardingPage() {
       <footer className="p-4 border-t bg-card sticky bottom-0 z-10 rounded-b-lg">
         <ChatInput
           onSendMessage={handleSendMessage}
-          disabled={onboardingState.isComplete || isLoading || !user}
+          disabled={onboardingState.isComplete || isLoading || !isSignedIn}
           placeholder={
             isLoading ? "Processing..." : 
             onboardingState.isComplete ? "Onboarding finished. Thank you!" : 
-            !user ? "Please log in to start onboarding." : "Type your answer..."
+            !isSignedIn ? "Please sign in to start onboarding." : "Type your answer..."
           }
         />
          {isLoading && <Loader2 className="animate-spin h-4 w-4 text-muted-foreground absolute right-20 bottom-7" />}
